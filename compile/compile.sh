@@ -1,128 +1,96 @@
 #!/bin/bash
 set -ex
 models=
-mode="f16"
+mode="int4"
 folder="tmp"
-num_device=1
 mode_args=""
-device_args=""
-addr_args=""
-quantize_args="--quantize F16"
+quantize_args="--quantize W4BF16"
 name=""
 num_layers=
-hidden_size=
-seq_length=512
 out_model=$name.bmodel
+num_core=""
 
 while [[ $# -gt 0 ]]; do
     key="$1"
 
     case $key in
-    --mode)
-        mode="$2"
-        shift 2
-        ;;
-    --num_device)
-        num_device="$2"
-        shift 2
-        ;;
-    --name)
-        name="$2"
-        shift 2
-        ;;
-    --addr_mode)
-        addr_mode="$2"
-        shift 2
-        ;;
-    --seq_length)
-        seq_length="$2"
-        shift 2
-        ;;
-    *)
-        echo "Invalid option: $key" >&2
-        exit 1
-        ;;
-    :)
-        echo "Option -$OPTARG requires an argument." >&2
-        exit 1
-        ;;
+        --mode)
+            mode="$2"
+            shift 2
+            ;;
+        --name)
+            name="$2"
+            shift 2
+            ;;
+        --num_core)
+            num_core="$2"
+            shift 2
+            ;;
+        *)
+            echo "Invalid option: $key" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
     esac
 done
 
-if [[ -z "$seq_length" ]]; then
-    echo "Error: --seq_length is required." >&2
-    exit 1
-fi
-
-if [ "$name" = "MiniCPM-2B" ]; then
+if [ "$name" = "minicpm-2b" ]; then
   num_layers=40
-  hidden_size=2304
   echo "Compile MiniCPM-2B"
-# elif [ "$name" = "llama2-13b" ]; then 
-#   num_layers=40
-#   hidden_size=5120
-#   echo "Compile Llama2-13B"
 else
-  >&2 echo -e "Error: Invalid name $name, the input name must be \033[31mMiniCPM-2B|MiniCPM-2B\033[0m"
+  >&2 echo -e "Error: Invalid name $name, the input name must be \033[31mminicpm-2b\033[0m"
   exit 1
 fi
 
 if [ x$mode == x"int8" ]; then
-    quantize_args="--quantize W8F16"
+    quantize_args="--quantize W8BF16"
 elif [ x$mode == x"f16" ]; then
-    quantize_args="--quantize F16"
+    quantize_args="--quantize BF16"
 elif [ x$mode == x"int4" ]; then
-    quantize_args="--quantize W4F16 --q_group_size 64"
+    quantize_args="--quantize W4BF16 --q_group_size 64"
 else
     echo "Error, unknown quantize mode"
     exit 1
 fi
 
-if [ x$num_device != x1 ]; then
-    device_args="--num_device $num_device"
-    out_model=$name'_'$mode'_'$num_device'dev_'$seq_length'.bmodel'
-else
-    out_model=$name'_'$mode'_1dev_'$seq_length'.bmodel'
-fi
+out_model=$name'_'$mode'_'$num_core'core.bmodel'
 
-if [ x$addr_mode == x"io_alone" ]; then
-    addr_args="--addr_mode io_alone"
-fi
-
-outdir=${folder}/${mode}_${num_device}/embedding
+outdir=${folder}/'embedding_'$num_core'core'
 mkdir -p $outdir
 pushd $outdir
 
 model_transform.py \
     --model_name embedding \
-    --model_def ../../onnx/embedding.pt \
-    --input_shapes [[1,$seq_length]] \
-    --input_types "int32" \
+    --model_def ../onnx/embedding.onnx \
     --mlir embedding.mlir
+
 
 model_deploy.py \
     --mlir embedding.mlir \
-    --quantize F16 \
+    --quantize BF16 \
     --quant_input \
     --quant_output \
-    --chip bm1684x \
-    $device_args \
+    --chip bm1688 \
+    --num_core $num_core \
     --model embedding.bmodel
 
 model_transform.py \
     --model_name embedding_cache \
-    --model_def ../../onnx/embedding.pt \
+    --model_def ../onnx/embedding.onnx \
     --input_shapes [[1,1]] \
-    --input_types "int32" \
     --mlir embedding_cache.mlir
+
 
 model_deploy.py \
     --mlir embedding_cache.mlir \
-    --quantize F16 \
+    --quantize BF16 \
     --quant_input \
     --quant_output \
-    --chip bm1684x \
-    $device_args \
+    --chip bm1688 \
+    --num_core $num_core \
     --model embedding_cache.bmodel
 
 rm *.npz
@@ -133,79 +101,39 @@ popd
 
 echo $models
 
-outdir=${folder}/$mode"_"$num_device"dev"/lm_head
+outdir='tmp/'$name'_bm1688_'$mode'/lm_head_'$num_core'core'
 mkdir -p $outdir
 pushd $outdir
 
-if [[ $num_device -gt 1 ]]; then
-    model_transform.py \
-        --model_name lm_head \
-        --model_def ../../onnx/lm_head_with_topk.pt \
-        --input_shapes [[1,1,${hidden_size}]] \
-        --mlir lm_head.mlir
+model_transform.py \
+    --model_name lm_head \
+    --model_def ../../onnx/lm_head.onnx \
+    --mlir lm_head.mlir
 
-    model_deploy.py \
-        --mlir lm_head.mlir \
-        $quantize_args \
-        --quant_input \
-        --chip bm1684x \
-        $device_args \
-        --model lm_head.bmodel
+model_deploy.py \
+    --mlir lm_head.mlir \
+    --quantize BF16 \
+    --quant_input \
+    --quant_output \
+    --chip bm1688 \
+    --num_core $num_core \
+    --model lm_head.bmodel
 
-    rm *.npz
-    models=${models}${outdir}'/lm_head.bmodel '
-else
-    model_transform.py \
-        --model_name lm_head \
-        --model_def ../../onnx/lm_head.onnx \
-        --input_shapes [[1,${hidden_size}]] \
-        --mlir lm_head.mlir
-    
-    model_deploy.py \
-        --mlir lm_head.mlir \
-        $quantize_args \
-        --quant_input \
-        --chip bm1684x \
-        $device_args \
-        --model lm_head.bmodel
-    
-    
-    model_transform.py \
-        --model_name greedy_head \
-        --model_def ../../onnx/greedy_head.onnx \
-        --mlir greedy_head.mlir
-    
-    model_deploy.py \
-        --mlir greedy_head.mlir \
-        --chip bm1684x \
-        --model greedy_head.bmodel
-    
-    
-    model_transform.py \
-        --model_name penalty_sample_head \
-        --model_def ../../onnx/penalty_sample_head.onnx \
-        --mlir penalty_sample_head.mlir
-    
-    model_deploy.py \
-        --mlir penalty_sample_head.mlir \
-        --chip bm1684x \
-        --model penalty_sample_head.bmodel
-    
-    rm *.npz
-    models=${models}${outdir}'/lm_head.bmodel '$outdir'/greedy_head.bmodel '$outdir'/penalty_sample_head.bmodel '
-fi
+rm *.npz
 
+models=${models}${outdir}'/lm_head.bmodel '
 popd
 
 echo $models
 
-outdir=${folder}/$mode"_"$num_device"dev"/block
+outdir='tmp/'$name'_bm1688_'$mode'/block_'$num_core'core'
 mkdir -p $outdir
 
 pushd $outdir
 mkdir -p $outdir
 
 for ((i=0; i<$num_layers; i++)); do
+
     model_transform.py \
         --model_name block_$i \
         --model_def ../../onnx/block_$i.onnx \
@@ -216,8 +144,8 @@ for ((i=0; i<$num_layers; i++)); do
         $quantize_args \
         --quant_input \
         --quant_output \
-        --chip bm1684x \
-        $device_args \
+        --chip bm1688 \
+        --num_core $num_core \
         --model block_$i.bmodel
 
     model_transform.py \
@@ -230,9 +158,9 @@ for ((i=0; i<$num_layers; i++)); do
         $quantize_args \
         --quant_input \
         --quant_output \
-        --chip bm1684x \
-        $device_args \
-        $addr_args \
+        --chip bm1688 \
+        --num_core $num_core \
+        --addr_mode io_alone \
         --model block_cache_$i.bmodel
 
     rm *.npz
@@ -244,4 +172,3 @@ popd
 echo $models
 
 model_tool --combine $models -o $out_model
-

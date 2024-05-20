@@ -2,7 +2,7 @@
 
 # MiniCPM
 
-本项目实现BM1688部署语言大模型[MiniCPM-2B](https://huggingface.co/openbmb/MiniCPM-2B-sft-bf16)。通过[TPU-MLIR](https://github.com/sophgo/tpu-mlir)编译器将模型转换成bmodel，并采用c++代码将其部署到BM1688的环境。
+本项目实现BM1684X和BM1688部署语言大模型[MiniCPM-2B](https://huggingface.co/openbmb/MiniCPM-2B-sft-bf16)。通过[TPU-MLIR](https://github.com/sophgo/tpu-mlir)编译器将模型转换成bmodel，并采用c++代码将其部署到BM1684X和BM1688的环境。
 
 
 ## 开发环境
@@ -13,8 +13,8 @@
 ``` shell
 docker pull sophgo/tpuc_dev:latest
 
-# myname1234 is just an example, you can set your own name
-docker run --privileged --name myname1234 -v $PWD:/workspace -it sophgo/tpuc_dev:latest
+# minicpm is just an example, you can set your own name
+docker run --privileged --name minicpm -v /dev:/dev -v $PWD:/workspace -it sophgo/tpuc_dev:latest
 ```
 后文假定环境都在docker的`/workspace`目录。
 

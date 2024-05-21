@@ -53,8 +53,8 @@ source ./envsetup.sh
 pip3 install dfss
 sudo apt-get update
 sudo apt-get install unzip
-python3 -m dfss --url=open@sophgo.com:sophon-demo/MiniCPM/models.zip
-unzip models.zip
+python3 -m dfss --url=open@sophgo.com:sophon-demo/MiniCPM/bm1688_models.zip
+unzip bm1688_models.zip
 ```
 
 1. 导出所有onnx模型，如果过程中提示缺少某些组件，直接`pip3 install 组件`即可
@@ -66,20 +66,21 @@ python3 export_onnx.py --model_path your_minicpm-2b_path
 此时有大量onnx模型被导出到tmp目录。模型`seq_length`默认为512，如果想要支持更长序列，请指定`--seq_length your_seq_length`
 
 2. 对onnx模型进行编译
+编译BM1684X的模型，进行INT8量化
+```shell
+./compile_bm1684x.sh --mode int8 --name minicpm-2b
+```
 
 目前TPU-MLIR、BM1688支持对MiniCPM进行INT4量化，如果要生成单核模型，则执行以下命令，最终生成`minicpm-2b_int4_1core.bmodel`文件
 
 ```shell
-./compile.sh --mode int8 --name minicpm-2b
-
-
-./compile.sh --name minicpm-2b --num_core 1 
+./compile_bm1688.sh --name minicpm-2b --num_core 1 
 ```
 
 如果要生成双核模型，则执行以下命令，最终生成`minicpm-2b_int4_2core.bmodel`文件
 
 ```shell
-./compile.sh --name minicpm-2b --num_core 2 
+./compile_bm1688.sh --name minicpm-2b --num_core 2 
 ```
 
 ## 编译程序(C++版本)

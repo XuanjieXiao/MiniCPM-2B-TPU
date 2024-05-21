@@ -90,7 +90,7 @@ python3 export_onnx.py --model_path your_minicpm-2b_path
 cd demo
 mkdir build
 cd build
-cmake ..
+cmake -DTARGET_ARCH=soc_bm1688 ..
 make
 ```
 

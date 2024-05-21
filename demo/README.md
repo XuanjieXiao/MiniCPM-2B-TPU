@@ -16,5 +16,5 @@ cd build && cmake .. && make && cp llama2 .. && cd ..
 
 # cpp demo
 ```
-./llama2 --model llama2-7b_int4_1dev.bmodel --tokenizer ../support/token_config/tokenizer.model  --devid 0
+./minicpm --model ../../models/minicpm-2b_int4_2core.bmodel --tokenizer ../../support/token_config/tokenizer.model  --devid 0
 ```

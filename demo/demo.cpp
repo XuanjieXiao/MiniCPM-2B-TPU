@@ -22,7 +22,7 @@ static const uint16_t ATTENTION_MASK = 0xC61C;
 
 class MiniCPM {
 public:
-  void init(std::string model_path, std::string tokenizer_path);
+  void init(std::string model_path, std::string tokenizer_path, const std::vector<int> &devices);
   void chat();
   void deinit();
 
@@ -89,12 +89,20 @@ void MiniCPM::load_sentencepiece(std::string tokenizer_path) {
   printf("Done!\n");
 }
 
-void MiniCPM::init(std::string model_path, std::string tokenizer_path) {
+void MiniCPM::init(std::string model_path, std::string tokenizer_path, const std::vector<int> &devices) {
   load_sentencepiece(tokenizer_path);
 
   // request bm_handle
-  bm_status_t status = bm_dev_request(&bm_handle, 0);
+  std::cout << "Device [ ";
+  for (auto d : devices) {
+    std::cout << d << " ";
+  }
+  std::cout << "] loading ....\n";
+  for (auto d : devices) {
+  bm_status_t status = bm_dev_request(&bm_handle, d);
   assert(BM_SUCCESS == status);
+  }
+
   // decode system prompt
   sentencepiece.Encode(system_string, &system_prompt);
 
@@ -348,24 +356,51 @@ void MiniCPM::answer(const std::string &input_str) {
   }
 }
 
+static void split(const std::string &s, const std::string &delim,
+                  std::vector<std::string> &ret) {
+  size_t last = 0;
+  size_t index = s.find_first_of(delim, last);
+  while (index != std::string::npos) {
+    ret.push_back(s.substr(last, index - last));
+    last = index + 1;
+    index = s.find_first_of(delim, last);
+  }
+  if (last < s.length()) {
+    ret.push_back(s.substr(last));
+  }
+}
+
+static std::vector<int> parseCascadeDevices(const std::string &str) {
+  std::vector<int> devices;
+  std::vector<std::string> sub_str;
+  split(str, ",", sub_str);
+  for (auto &s : sub_str) {
+    devices.push_back(std::atoi(s.c_str()));
+  }
+  return devices;
+}
+
 void Usage() {
   printf("Usage:\n"
          "  --help         : Show help info.\n"
          "  --model        : Set model path \n"
-         "  --tokenizer    : Set tokenizer path \n");
+         "  --tokenizer    : Set tokenizer path \n"
+         "  --devid        : Set devices to run for model, e.g. 1,2, if not provided, use 0\n");
 }
 
 void processArguments(int argc, char *argv[], std::string &model_path,
-                      std::string &tokenizer_path) {
-  struct option longOptions[] = {{"model", required_argument, nullptr, 'm'},
-                                 {"tokenizer", required_argument, nullptr, 't'},
-                                 {"help", no_argument, nullptr, 'h'},
-                                 {nullptr, 0, nullptr, 0}};
+                      std::string &tokenizer_path, std::vector<int> &devices) {
+  struct option longOptions[] = {
+    {"model", required_argument, nullptr, 'm'},
+    {"tokenizer", required_argument, nullptr, 't'},
+    {"devid", required_argument, nullptr, 'd'},
+    {"help", no_argument, nullptr, 'h'},
+    {nullptr, 0, nullptr, 0}};
 
   int optionIndex = 0;
   int option;
 
-  while ((option = getopt_long(argc, argv, "m:t:h:", longOptions,
+  while ((option = getopt_long(argc, argv, "m:t:d:h:", longOptions,
                                &optionIndex)) != -1) {
     switch (option) {
     case 'm':
@@ -373,6 +408,9 @@ void processArguments(int argc, char *argv[], std::string &model_path,
       break;
     case 't':
       tokenizer_path = optarg;
+      break;
+    case 'd':
+      devices = parseCascadeDevices(optarg);
       break;
     case 'h':
       Usage();
@@ -388,10 +426,11 @@ void processArguments(int argc, char *argv[], std::string &model_path,
 
 int main(int argc, char **argv) {
   // set your bmodel path here
-  printf("Demo for MiniCPM in BM1684X\n");
+  printf("Demo for MiniCPM in BM1684X AND BM1688\n");
   std::string model_path;
   std::string tokenizer_path;
-  processArguments(argc, argv, model_path, tokenizer_path);
+  std::vector<int> devices = {0};
+  processArguments(argc, argv, model_path, tokenizer_path, devices);
   if (model_path.empty()) {
     Usage();
     exit(EXIT_FAILURE);
@@ -399,7 +438,7 @@ int main(int argc, char **argv) {
 
   MiniCPM minicpm;
   printf("Init Environment ...\n");
-  minicpm.init(model_path, tokenizer_path);
+  minicpm.init(model_path, tokenizer_path, devices);
   printf("==========================\n");
   minicpm.chat();
   minicpm.deinit();

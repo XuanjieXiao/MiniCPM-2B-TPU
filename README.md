@@ -7,7 +7,6 @@
 
 ## 开发环境
 
-
 1. 下载docker，启动容器，如下：
 
 ``` shell
@@ -16,17 +15,27 @@ docker pull sophgo/tpuc_dev:latest
 # minicpm is just an example, you can set your own name
 docker run --privileged --name minicpm -v /dev:/dev -v $PWD:/workspace -it sophgo/tpuc_dev:latest
 ```
-后文假定环境都在docker的`/workspace`目录。
+后文默认环境都在docker的`/workspace`目录。
 
 
-2. 从Huggingface下载`MiniCPM-2B`，比较大，会花较长时间
+2. 您可以使用方法一，从Huggingface下载`MiniCPM-2B`，比较大，会花较长时间。同时，我们也为您提供了便捷的下载方式，您可以使用下面方法二来下载：
 
+方法一：
 ``` shell
 git lfs install
 git clone git@hf.co:openbmb/MiniCPM-2B-sft-bf16
 ```
 
-并使用`files/minicpm-2b`下的`modeling_minicpm.py`替换 `MiniCPM-2B-sft-bf16` 目录下的原模型的对应文件
+方法二：
+``` shell
+pip3 install dfss
+sudo apt-get update
+sudo apt-get install unzip
+python3 -m dfss --url=open@sophgo.com:sophon-demo/MiniCPM/MiniCPM-2B-sft-bf16.zip
+unzip MiniCPM-2B-sft-bf16.zip
+```
+
+并使用`files/minicpm-2b`下的`modeling_minicpm.py`替换在 `MiniCPM-2B-sft-bf16` 目录下的原模型的对应文件`modeling_minicpm.py`
 
 3. 下载`TPU-MLIR`代码并编译，(也可以直接下载编译好的release包解压)
 
@@ -38,6 +47,15 @@ source ./envsetup.sh
 ```
 
 ## 编译模型
+0. 如果您只是想测试MiniCPM的模型性能，您可以通过dfss直接下载我们已经编译好的模型，如下是下载方法：
+如果您想尝试自己导出模型，并编译为bmodel，您可以跳过当前步骤。
+```bash
+pip3 install dfss
+sudo apt-get update
+sudo apt-get install unzip
+python3 -m dfss --url=open@sophgo.com:sophon-demo/MiniCPM/models.zip
+unzip models.zip
+```
 
 1. 导出所有onnx模型，如果过程中提示缺少某些组件，直接`pip3 install 组件`即可
 

@@ -93,7 +93,7 @@ void MiniCPM::init(std::string model_path, std::string tokenizer_path) {
   load_sentencepiece(tokenizer_path);
 
   // request bm_handle
-  bm_status_t status = bm_dev_request(&bm_handle, 3);
+  bm_status_t status = bm_dev_request(&bm_handle, 0);
   assert(BM_SUCCESS == status);
   // decode system prompt
   sentencepiece.Encode(system_string, &system_prompt);

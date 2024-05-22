@@ -48,7 +48,7 @@ source ./envsetup.sh
 
 ## 编译模型
 0. 如果您只是想测试MiniCPM的模型性能，您可以通过dfss直接下载我们已经编译好的模型，如下是下载方法：
-如果您想尝试自己导出模型，并编译为bmodel，您可以跳过当前步骤。
+如果您想尝试自己导出模型，并编译为bmodel，您可以跳过当前步骤0。
 ```bash
 pip3 install dfss
 sudo apt-get update
@@ -85,8 +85,16 @@ python3 export_onnx.py --model_path your_minicpm-2b_path
 
 ## 编译程序(C++版本)
 
-在开发板上执行如下编译：
+在开发板上或者X86主机执行如下编译：
+您需要根据您使用的开发板及芯片种类进行选择
 
+1、如果您是 `soc BM1688芯片` 请将参数设置为 `-DTARGET_ARCH=soc_bm1688`；
+
+2、如果您是 `soc BM1684x芯片` 请将参数设置为 `-DTARGET_ARCH=soc_bm1684x`；
+
+3、如果您是 `pcie BM1684x芯片` 请将参数设置为 `-DTARGET_ARCH=pcie`；
+
+下面给出了设置为 `soc BM1688芯片`的编译方式：
 ```shell
 cd demo
 mkdir build
@@ -98,7 +106,7 @@ make
 编译生成minicpm可执行程序，将`minicpm`放到demo目录下，同时按照下列方式指定芯片数量和bmodel路径。
 运行`minicpm`，如运行双核模型`minicpm-2b_int4_2core.bmodel`:
 ```shell
-./minicpm --model ../compile/minicpm-2b_int4_2core.bmodel --tokenizer ../support/tokenizer.model
+./minicpm --model ../compile/minicpm-2b_int4_2core.bmodel --tokenizer ../support/tokenizer.model --devid 0
 ```
 
 ## 运行效果
@@ -106,6 +114,7 @@ make
 以下为双核INT4量化模式的运行效果：
 
 ![](../../assets/minicpm.png)
+
 
 ## 常见问题
 

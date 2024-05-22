@@ -113,7 +113,7 @@ make
 
 以下为双核INT4量化模式的运行效果：
 
-![](../../assets/minicpm.png)
+![](./assets/Show_Results.png)
 
 
 ## 常见问题

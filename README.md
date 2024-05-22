@@ -12,7 +12,7 @@
 ``` shell
 docker pull sophgo/tpuc_dev:latest
 
-# minicpm is just an example, you can set your own name
+# minicpm is just an example name, you can set your own name
 docker run --privileged --name minicpm -v /dev:/dev -v $PWD:/workspace -it sophgo/tpuc_dev:latest
 ```
 后文默认环境都在docker的`/workspace`目录。

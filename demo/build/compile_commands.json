@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/workspace/MiniCPM-2B-TPU/demo/build",
+  "command": "/usr/bin/c++ -DDEBUG -DPCIE_TARGET -I/workspace/MiniCPM-2B-TPU/demo/../support/include_bm1684x -g   --std=c++17 -fPIC -Wall -Werror -o CMakeFiles/minicpm.dir/demo.cpp.o -c /workspace/MiniCPM-2B-TPU/demo/demo.cpp",
+  "file": "/workspace/MiniCPM-2B-TPU/demo/demo.cpp"
+}
+]

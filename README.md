@@ -239,6 +239,6 @@ make
 
 ## 运行效果
 
-以下为双核INT4量化模式的运行效果：
+以下为BM1688双核INT4量化模式的运行效果：
 
 ![](./assets/Show_Results.png)

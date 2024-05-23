@@ -30,3 +30,5 @@ cd /opt/sophon/libsophon-0.5.0/
 cp libbmlib.so.0 ./MiniCPM-2B-TPU/support/lib_soc_bm1684x
 cp libbmrt.so.1.0 ./MiniCPM-2B-TPU/support/lib_soc_bm1684x
 ```
+
+

@@ -1,0 +1,3 @@
+/workspace/MiniCPM-2B-TPU/demo/build/CMakeFiles/minicpm.dir
+/workspace/MiniCPM-2B-TPU/demo/build/CMakeFiles/edit_cache.dir
+/workspace/MiniCPM-2B-TPU/demo/build/CMakeFiles/rebuild_cache.dir

@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/minicpm.dir/demo.cpp.o -o minicpm   -L/workspace/MiniCPM-2B-TPU/demo/../support/lib_pcie  -Wl,-rpath,/workspace/MiniCPM-2B-TPU/demo/../support/lib_pcie -lbmlib -lbmrt -lsentencepiece 

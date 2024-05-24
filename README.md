@@ -219,7 +219,7 @@ python3 export_onnx.py --model_path your_minicpm-2b_path
 
 ## 4. 编译例程
 
-C++例程的详细编译请参考[C++例程](./cpp/README.md)
+C++例程的详细编译请参考[C++例程](./demo/README.md)
 
 在开发板上或者X86主机执行如下编译：
 您需要根据您使用的开发板及芯片种类进行选择
@@ -244,7 +244,7 @@ make
 运行`minicpm`，如运行双核模型`minicpm-2b_int4_2core.bmodel`:
 
 ```shell
-./minicpm --model ../models/minicpm-2b_int4_2core.bmodel --tokenizer ../support/tokenizer.model --devid 0
+./minicpm --model ../models/bm1688_models/minicpm-2b_int4_2core.bmodel --tokenizer ../support/tokenizer.model --devid 0
 ```
 
 ## 运行效果

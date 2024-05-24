@@ -101,7 +101,7 @@ docker pull sophgo/tpuc_dev:latest
 docker run --privileged --name myname1234 -v $PWD:/workspace -it sophgo/tpuc_dev:latest
 ```
 
-当前$PWD应该是sophon-demo/sample/MiniCPM
+当前$PWD应该是sophon-demo/sample/MiniCPM-2B
 
 后文(模型转换过程)假定环境都在docker的/workspace目录。
 

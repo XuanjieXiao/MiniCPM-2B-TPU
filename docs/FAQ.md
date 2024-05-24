@@ -9,7 +9,9 @@
 我们列出了一些用户和开发者在开发过程中会遇到的常见问题以及对应的解决方案，如果您发现了任何问题，请随时联系我们或创建相关issue，非常欢迎您提出的任何问题或解决方案。
 
 ## 1 环境安装相关问题
-### 1.1 如果您遇到下面的这种问题，有可能是您的libsophon不匹配，您可以拷贝本机的 `libsophon` 到您的 `lib_soc_bm1684x` 文件夹
+### 1.1 如果您遇到下面的这种问题，有可能是您的libsophon不匹配.
+您可以拷贝本机的 `libsophon` 到您的 `lib_soc_bm1684x` 文件夹
+
 ```
 [BMRT][load_bmodel:1704] INFO:Bmodel loaded, version 2.2+v1.7.beta.152-g10f3dc5e5-20240508
 [BMRT][load_bmodel:1706] INFO:pre net num: 0, load net num: 83

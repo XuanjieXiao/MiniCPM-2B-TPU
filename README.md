@@ -169,11 +169,8 @@ set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
 
 5.下载最新的libsophon库并安装
 
-因该例程对libsophon的版本需求比较高，故而您所使用的libsophon可能不支持，但是我们给您提供了能够支持的libsophon版本，您可以使用我们的dfss工具进行下载：
-
-```shell
-
-```
+因该例程对libsophon的版本需求比较高，故而您所使用的libsophon可能不支持，但是我们给您提供了能够支持的libsophon版本，
+您可以直接使用 `support`文件夹下的对应的libsophon，如果您还有其他的问题，您可以直接参考[FAQ](./docs/FAQ.md)。
 
 ### 3.3 编译模型
 

@@ -1,0 +1,6 @@
+tmp*/
+build/
+deploy/
+*.bmodel
+.vscode
+*.npz

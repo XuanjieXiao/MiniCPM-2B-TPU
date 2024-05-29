@@ -25,7 +25,7 @@ minicpm: /data/MiniCPM-2B-TPU/demo/demo.cpp:117: void MiniCPM::init(std::string,
 Aborted
 ```
 
-![alt text](../assets/image.png)
+![alt text](../pics/image.png)
 
 ```
 cd /opt/sophon/libsophon-0.5.0/

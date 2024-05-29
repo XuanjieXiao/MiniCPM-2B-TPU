@@ -54,7 +54,7 @@ chmod -R +x scripts/
 
 ```shell
 .
-├── assets                              #图片文件
+├── pics                              #图片文件
 │   ├── image.png
 │   ├── Show_Results.png
 │   └── sophgo_chip.png
@@ -131,7 +131,7 @@ unzip MiniCPM-2B-sft-bf16.zip
 
 并对该工程做如下修改：
 
-使用`files/minicpm-2b`下的`modeling_minicpm.py`替换在 `MiniCPM-2B-sft-bf16` 目录下的原模型的对应文件`modeling_minicpm.py`
+使用`scripts/compile`下的`modeling_minicpm.py`替换在 `MiniCPM-2B-sft-bf16` 目录下的原模型的对应文件`modeling_minicpm.py`
 
 3.下载`TPU-MLIR`代码并编译，(也可以直接下载编译好的release包解压)
 
@@ -190,7 +190,7 @@ cd compile
 python3 export_onnx.py --model_path your_minicpm-2b_path
 ```
 
-此时有大量onnx模型被导出到tmp目录。模型`seq_length`默认为512，如果想要支持更长序列，请指定`--seq_length your_seq_length`
+此时有大量onnx模型被导出到tmp目录。模型`seq_length`默认为512，如果想要支持更长序列，请在 `export_onnx.py`脚本运行时指定`--seq_length your_seq_length`
 
 2.对onnx模型进行编译，生成bmodel，这个过程会花一些时间，最终生成`minicpm-XXX.bmodel`文件
 
@@ -256,4 +256,4 @@ make
 
 以下为BM1688双核INT4量化模式的运行效果：
 
-![Show_Results](./assets/Show_Results.png)
+![Show_Results](./pics/Show_Results.png)

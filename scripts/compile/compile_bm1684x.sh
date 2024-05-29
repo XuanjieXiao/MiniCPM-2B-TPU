@@ -58,7 +58,7 @@ else
     exit 1
 fi
 
-out_model=$name'_'$mode'_'$num_core'_'ioalone'.bmodel'
+out_model=$name'_'$mode'_'$num_core'core_'ioalone'.bmodel'
 
 outdir=${folder}/'embedding_'$num_core''
 mkdir -p $outdir

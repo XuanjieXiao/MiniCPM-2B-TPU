@@ -24,7 +24,7 @@ MiniCPM 是面壁与清华大学自然语言处理实验室共同开源的系列
 
 2、对于1688芯片，支持在(libsophon0.4.9)及以上的SDK上运行。
 
-其中在SE7上运行需要额外进行环境配置，请参照[运行环境准备](#2-运行环境准备)完成环境部署。
+其中在SE7上运行需要使用 `libsophon>=0.5.0` 的刷机包，如果遇到报错，请参照[运行环境准备](#2-运行环境准备)完成环境部署。
 
 ## 2. 运行环境准备
 
@@ -32,7 +32,15 @@ MiniCPM 是面壁与清华大学自然语言处理实验室共同开源的系列
 
 ### 2.1 环境部署问题
 
-您可能会遇到有报错，请参考[FAQ](./docs/FAQ.md)
+我们为您提供了较新的SE7刷机包，您可以使用下面的下载方式进行下载，然后按照官网的刷机方式进行刷机。
+
+```shell
+pip3 install dfss
+python3 -m dfss --url=open@sophgo.com:sophon-demo/MiniCPM/sdcard.tgz
+tar -zxvf sdcard.tgz
+```
+
+您在运行的时候可能会遇到有报错，请参考[FAQ](./docs/FAQ.md)进行解决。
 
 ## 3. 准备模型
 
@@ -54,36 +62,34 @@ chmod -R +x scripts/
 
 ```shell
 .
-├── pics                              #图片文件
+├── cpp
+│   ├── CMakeLists.txt
+│   ├── demo.cpp                            #主程序
+│   ├── include_bm1684x                     #1684x编译所需头文件
+│   ├── include_bm1688                      #1688 编译所需头文件
+│   ├── lib_pcie                            #1684X pcie编译所需链接库
+│   ├── lib_soc_bm1684x                     #1684x编译所需链接库
+│   ├── lib_soc_bm1688                      #1688 编译所链接库
+│   ├── README.md                           #例程说明
+│   ├── requirements.txt                    #需求库
+│   └── token_config                        #token文件及模型
+├── docs
+│   └── FAQ.md                              #问题汇总
+├── pics                                    #图片文件
 │   ├── image.png
 │   ├── Show_Results.png
 │   └── sophgo_chip.png
-├── compile                             #模型编译文件
-│   ├── compile_bm1684x.sh              #编译1684X的脚本
-│   ├── compile_bm1688.sh               #编译1688的脚本
-│   ├── export_onnx.py                  #导出onnx模型脚本
-│   └── files                           
-│       └── minicpm-2b                  
-│           └── modeling_minicpm.py     #模型文件
-├── demo        
-│   ├── CMakeLists.txt                  
-│   ├── demo.cpp                        #主程序
-│   └── README.md                       #例程说明
-├── docs               
-│   └── FAQ.md                          #问题汇总
-├── README.md                           #使用说明
-├── requirements.txt                    #需求库
-├── scripts                             #下载脚本等
-└── support                             #编译所需头文件及链接库
-    ├── include_bm1684x
-    ├── include_bm1688
-    ├── lib_pcie
-    ├── lib_soc_bm1684x
-    ├── lib_soc_bm1688
-    └── token_config
+├── README.md
+└── scripts                                #下载及模型编译脚本等
+    ├── compile                            #模型编译文件
+    │   ├── compile_bm1684x.sh             #编译1684X的脚本
+    │   ├── compile_bm1688.sh              #编译1688的脚本
+    │   ├── export_onnx.py                 #导出onnx模型脚本
+    │   └── modeling_minicpm.py            #模型文件
+    └── download.sh
 ```
 
-**注意：**在下载模型前，应该保证存储空间大于25GB。
+**注意：** 在下载模型前，应该保证存储空间大于25GB。
 
 ### 3.2 开发环境准备
 
@@ -217,7 +223,7 @@ python3 export_onnx.py --model_path your_minicpm-2b_path
 
 ## 4. 编译例程
 
-C++例程的详细编译请参考[C++例程](./demo/README.md)
+C++例程的详细编译请参考[C++例程](./cpp/README.md)
 
 在开发板上或者X86主机执行如下编译：
 您需要根据您使用的开发板及芯片种类进行选择
@@ -231,14 +237,14 @@ C++例程的详细编译请参考[C++例程](./demo/README.md)
 下面给出了设置为 `soc BM1688芯片`的编译方式：
 
 ```shell
-cd demo
+cd cpp
 mkdir build
 cd build
 cmake -DTARGET_ARCH=soc_bm1688 ..
 make
 ```
 
-编译生成minicpm可执行程序，将`minicpm`放到demo目录下，同时按照下列方式指定芯片数量和bmodel路径。
+编译生成minicpm可执行程序，将`minicpm`放到cpp目录下，同时按照下列方式指定芯片数量和bmodel路径。
 运行`minicpm`，如运行双核模型`minicpm-2b_int4_2core.bmodel`:
 
 ```shell

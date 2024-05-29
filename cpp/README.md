@@ -16,7 +16,7 @@ PCIE环境下直接编译可以在之前使用的tpu的docker下继续执行；S
 
 1. BM1684X PCIE环境下直接编译
 
-当前路径/MiniCPM-2B/demo
+当前路径/MiniCPM-2B/cpp
 
 ```shell
 mkdir build

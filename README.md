@@ -40,7 +40,6 @@ python3 -m dfss --url=open@sophgo.com:sophon-demo/MiniCPM/sdcard.tgz
 tar -zxvf sdcard.tgz
 ```
 
-您在运行的时候可能会遇到有报错，请参考[FAQ](./docs/FAQ.md)进行解决。
 
 ## 3. 准备模型
 
@@ -250,6 +249,8 @@ make
 ```shell
 ./minicpm --model ../models/bm1688_models/minicpm-2b_int4_2core.bmodel --tokenizer ../support/tokenizer.model --devid 0
 ```
+
+您在运行的时候可能会遇到有报错，请参考[FAQ](./docs/FAQ.md)进行解决。
 
 ## 5. 运行效果及性能
 根据测试，我们得到了如下表的模型性能表：

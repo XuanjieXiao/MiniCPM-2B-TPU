@@ -9,6 +9,7 @@ name=""
 num_layers=
 out_model=$name.bmodel
 num_core=""
+chip_name="bm1688"
 
 while [[ $# -gt 0 ]]; do
     key="$1"
@@ -56,7 +57,7 @@ else
     exit 1
 fi
 
-out_model=$name'_'$mode'_'$num_core'core.bmodel'
+out_model=$name'_'$mode'_'$chip_name'_'$num_core'core.bmodel'
 
 outdir=${folder}/'embedding_'$num_core'core'
 mkdir -p $outdir

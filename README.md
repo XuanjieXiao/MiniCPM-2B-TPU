@@ -7,7 +7,7 @@
   - [1. 简介](#1-简介)
   - [2. 运行环境准备](#2-运行环境准备)
     - [2.1 环境部署问题](#21-环境部署问题)
-  - [3. 准备模型](#3-准备模型)
+  - [3. 准备模型和链接库](#3-准备模型和链接库)
     - [3.1 使用提供的模型](#31-使用提供的模型)
     - [3.2 开发环境准备](#32-开发环境准备)
     - [3.3 编译模型](#33-编译模型)
@@ -41,13 +41,13 @@ tar -zxvf sdcard.tgz
 ```
 
 
-## 3. 准备模型
+## 3. 准备模型和链接库
 
 该模型目前支持在BM1688和BM1684X上运行，已提供编译好的bmodel。
 
 ### 3.1 使用提供的模型
 
-​本例程在`scripts`目录下提供了相关模型载脚本`download.sh`
+​本例程在`scripts`目录下提供了相关模型以及对应链接库得下载脚本`download.sh`
 
 ```bash
 # 安装unzip，若已安装请跳过，非ubuntu系统视情况使用yum或其他方式安装
@@ -71,9 +71,15 @@ chmod -R +x scripts/
 │   ├── lib_soc_bm1688                      #1688 编译所链接库
 │   ├── README.md                           #例程说明
 │   ├── requirements.txt                    #需求库
-│   └── token_config                        #token文件及模型
+│   └── token_config                        #tokenizer文件及模型
 ├── docs
 │   └── FAQ.md                              #问题汇总
+├── mdoels
+│   ├── BM1684X                                     #使用TPU-MLIR编译，用于BM1684X的模型
+│   │   ├── minicpm-2b_bm1684x_int4.bmodel
+│   └── BM1688                                      #使用TPU-MLIR编译，用于BM1684X的模型
+│       ├── minicpm-2b_bm1688_int4_1core.bmodel
+│       └── minicpm-2b_bm1688_int4_2core.bmodel
 ├── pics                                    #图片文件
 │   ├── image.png
 │   ├── Show_Results.png
@@ -197,7 +203,7 @@ python3 export_onnx.py --model_path your_minicpm-2b_path
 
 此时有大量onnx模型被导出到tmp目录。模型`seq_length`默认为512，如果想要支持更长序列，请在 `export_onnx.py`脚本运行时指定`--seq_length your_seq_length`
 
-2.对onnx模型进行编译，生成bmodel，这个过程会花一些时间，最终生成`minicpm-XXX.bmodel`文件
+2.对onnx模型进行编译，生成bmodel，这个过程会花一些时间，最终生成`minicpm-2b_XXX.bmodel`文件
 
 2.1 编译BM1684X的模型，进行INT8量化
 
@@ -224,40 +230,13 @@ python3 export_onnx.py --model_path your_minicpm-2b_path
 
 C++例程的详细编译请参考[C++例程](./cpp/README.md)
 
-在开发板上或者X86主机执行如下编译：
-您需要根据您使用的开发板及芯片种类进行选择
-
-1、如果您是 `soc BM1688芯片` 请将参数设置为 `-DTARGET_ARCH=soc_bm1688`；
-
-2、如果您是 `soc BM1684x芯片` 请将参数设置为 `-DTARGET_ARCH=soc_bm1684x`；
-
-3、如果您是 `pcie BM1684x芯片` 请将参数设置为 `-DTARGET_ARCH=pcie`；
-
-下面给出了设置为 `soc BM1688芯片`的编译方式：
-
-```shell
-cd cpp
-mkdir build
-cd build
-cmake -DTARGET_ARCH=soc_bm1688 ..
-make
-```
-
-编译生成minicpm可执行程序，将`minicpm`放到cpp目录下，同时按照下列方式指定芯片数量和bmodel路径。
-运行`minicpm`，如运行双核模型`minicpm-2b_int4_2core.bmodel`:
-
-```shell
-./minicpm --model ../models/bm1688_models/minicpm-2b_int4_2core.bmodel --tokenizer ../support/tokenizer.model --devid 0
-```
-
-您在运行的时候可能会遇到有报错，请参考[FAQ](./docs/FAQ.md)进行解决。
 
 ## 5. 运行效果及性能
 根据测试，我们得到了如下表的模型性能表：
 |    测试平台   |     测试程序      |        测试模型        |speed|
 | -----------  | ---------------- | ---------------------- | --------  |
-|   1684X PCIE | demo.cpp  | minicpm-2b_bm1684x_int4_1core |    15 token/s  |
-|   SE7-32     | demo.cpp  | minicpm-2b_bm1684x_int4_1core |    20 token/s  |
+|   1684X PCIE | demo.cpp  | minicpm-2b_bm1684x_int4       |    15 token/s  |
+|   SE7-32     | demo.cpp  | minicpm-2b_bm1684x_int4       |    20 token/s  |
 |   SE9-16     | demo.cpp  | minicpm-2b_bm1688_int4_1core  |    8  token/s  |
 |   SE9-16     | demo.cpp  | minicpm-2b_bm1688_int4_2core  |    9 token/s  |
 

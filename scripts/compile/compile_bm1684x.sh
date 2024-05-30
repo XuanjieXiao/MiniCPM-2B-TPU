@@ -11,6 +11,7 @@ hidden_size=
 out_model=$name.bmodel
 num_core=""
 seq_length=512
+chip_name="bm1684x"
 
 while [[ $# -gt 0 ]]; do
     key="$1"
@@ -58,7 +59,7 @@ else
     exit 1
 fi
 
-out_model=$name'_'$mode'_'$num_core'core_'ioalone'.bmodel'
+out_model=$name'_'$mode'_'$chip_name'_'$num_core'core.bmodel'
 
 outdir=${folder}/'embedding_'$num_core''
 mkdir -p $outdir

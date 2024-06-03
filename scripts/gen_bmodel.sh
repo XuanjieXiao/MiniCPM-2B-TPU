@@ -9,7 +9,8 @@ name=""
 num_layers=
 out_model=$name.bmodel
 num_core=""
-chip_name="bm1688"
+target="bm1688"
+num_core_args="--num_core 1"
 
 while [[ $# -gt 0 ]]; do
     key="$1"
@@ -27,6 +28,11 @@ while [[ $# -gt 0 ]]; do
             num_core="$2"
             shift 2
             ;;
+        --target)
+            target=${2,,}
+            target_dir=${target^^}
+            shift 2
+            ;;
         *)
             echo "Invalid option: $key" >&2
             exit 1
@@ -38,12 +44,22 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ "$name" = "minicpm-2b" ]; then
-  num_layers=40
-  echo "Compile MiniCPM-2B"
+if [ x$target == x"bm1684x" ]; then
+    num_core_args="--num_core 1"
+    out_model=$name'_'$target'_'$mode'.bmodel'
+    folder='tmp/'$name'_'$target'_'$mode''
 else
-  >&2 echo -e "Error: Invalid name $name, the input name must be \033[31mminicpm-2b\033[0m"
-  exit 1
+    num_core_args="--num_core $num_core"
+    out_model=$name'_'$target'_'$mode'_'$num_core'core.bmodel'
+    folder='tmp/'$name'_'$target'_'$mode'_'$num_core'core'
+fi
+
+if [ "$name" = "minicpm-2b" ]; then
+    num_layers=40
+    echo "Compile MiniCPM-2B"
+else
+    echo >&2 -e "Error: Invalid name $name, the input name must be \033[31mminicpm-2b\033[0m"
+    exit 1
 fi
 
 if [ x$mode == x"int8" ]; then
@@ -57,41 +73,37 @@ else
     exit 1
 fi
 
-out_model=$name'_'$mode'_'$chip_name'_'$num_core'core.bmodel'
-
-outdir=${folder}/'embedding_'$num_core'core'
+outdir=${folder}/'embedding'
 mkdir -p $outdir
 pushd $outdir
 
 model_transform.py \
     --model_name embedding \
-    --model_def ../onnx/embedding.onnx \
+    --model_def ../../onnx/embedding.onnx \
     --mlir embedding.mlir
-
 
 model_deploy.py \
     --mlir embedding.mlir \
     --quantize BF16 \
     --quant_input \
     --quant_output \
-    --chip bm1688 \
-    --num_core $num_core \
+    --chip $target \
+    $num_core_args \
     --model embedding.bmodel
 
 model_transform.py \
     --model_name embedding_cache \
-    --model_def ../onnx/embedding.onnx \
+    --model_def ../../onnx/embedding.onnx \
     --input_shapes [[1,1]] \
     --mlir embedding_cache.mlir
-
 
 model_deploy.py \
     --mlir embedding_cache.mlir \
     --quantize BF16 \
     --quant_input \
     --quant_output \
-    --chip bm1688 \
-    --num_core $num_core \
+    --chip $target \
+    $num_core_args \
     --model embedding_cache.bmodel
 
 rm *.npz
@@ -102,7 +114,7 @@ popd
 
 echo $models
 
-outdir='tmp/'$name'_bm1688_'$mode'/lm_head_'$num_core'core'
+outdir=$folder'/lm_head'
 mkdir -p $outdir
 pushd $outdir
 
@@ -116,8 +128,8 @@ model_deploy.py \
     --quantize BF16 \
     --quant_input \
     --quant_output \
-    --chip bm1688 \
-    --num_core $num_core \
+    --chip $target \
+    $num_core_args \
     --model lm_head.bmodel
 
 rm *.npz
@@ -127,13 +139,13 @@ popd
 
 echo $models
 
-outdir='tmp/'$name'_bm1688_'$mode'/block_'$num_core'core'
+outdir=$folder'/block'
 mkdir -p $outdir
 
 pushd $outdir
 mkdir -p $outdir
 
-for ((i=0; i<$num_layers; i++)); do
+for ((i = 0; i < $num_layers; i++)); do
 
     model_transform.py \
         --model_name block_$i \
@@ -145,8 +157,8 @@ for ((i=0; i<$num_layers; i++)); do
         $quantize_args \
         --quant_input \
         --quant_output \
-        --chip bm1688 \
-        --num_core $num_core \
+        --chip $target \
+        $num_core_args \
         --model block_$i.bmodel
 
     model_transform.py \
@@ -159,8 +171,8 @@ for ((i=0; i<$num_layers; i++)); do
         $quantize_args \
         --quant_input \
         --quant_output \
-        --chip bm1688 \
-        --num_core $num_core \
+        --chip $target \
+        $num_core_args \
         --addr_mode io_alone \
         --model block_cache_$i.bmodel
 

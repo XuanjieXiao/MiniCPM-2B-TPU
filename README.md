@@ -5,49 +5,64 @@
 - [MiniCPM](#minicpm)
   - [目录](#目录)
   - [1. 简介](#1-简介)
-  - [2. 运行环境准备](#2-运行环境准备)
-    - [2.1 环境部署问题](#21-环境部署问题)
-  - [3. 准备模型和链接库](#3-准备模型和链接库)
-    - [3.1 使用提供的模型](#31-使用提供的模型)
-    - [3.2 开发环境准备](#32-开发环境准备)
-    - [3.3 编译模型](#33-编译模型)
-  - [4. 编译例程](#4-编译例程)
-  - [5. 运行效果及性能](#5-运行效果及性能)
+  - [2. 特性](#2-特性)
+  - [3. 运行环境准备](#3-运行环境准备)
+  - [4. 准备模型和链接库](#4-准备模型和链接库)
+    - [4.1 使用提供的模型](#41-使用提供的模型)
+    - [4.2 自行编译模型](#42-自行编译模型)
+    - [4.3 编译模型](#43-编译模型)
+  - [5. 例程测试](#5-例程测试)
+  - [6. 程序性能测试](#6-程序性能测试)
 
 ## 1. 简介
 
-MiniCPM 是面壁与清华大学自然语言处理实验室共同开源的系列端侧语言大模型，主体语言模型 MiniCPM-2B 仅有 24亿（2.4B）的非词嵌入参数量。
+MiniCPM 是面壁与清华大学自然语言处理实验室共同开源的系列端侧语言大模型，主体语言模型 MiniCPM-2B 仅有 24亿（2.4B）的非词嵌入参数量。关于该模型的其他特性，请前往源repo查看：https://huggingface.co/openbmb/MiniCPM-2B-sft-bf16。本例程对MiniCPM-2B进行移植，使之能在SOPHON BM1684X/BM1688 上进行推理测试。
 
-该例程目前只提供了C++版本，支持BM1688芯片和BM1684X芯片，支持在插有1684X系列加速卡的x86主机上运行，也可以SOC模式下的SE9和SE7上运行。
 
-1、对于1684X芯片，支持在(libsophon_0.5.0)及以上的SDK上运行；
+该例程支持在V23.09LTS SP2及以上的BM1684X SOPHONSDK, 或在v1.5.1及以上的BM1688 SOPHONSDK上运行，支持在插有1684X加速卡(SC7系列)的x86主机上运行，也可以在1684X SoC设备（如SE7、SM7、Airbox等）上运行，也支持在BM1688 Soc设备（如SE9-16）上运行。
 
-2、对于1688芯片，支持在(libsophon0.4.9)及以上的SDK上运行。
+在SoC上运行需要额外进行环境配置，请参照[运行环境准备](#3-运行环境准备)完成环境部署。
 
-其中在SE7上运行需要使用 `libsophon>=0.5.0` 的刷机包，如果遇到报错，请参照[运行环境准备](#2-运行环境准备)完成环境部署。
+## 2.特性
 
-## 2. 运行环境准备
+* 支持BM1684X(x86 PCIe、SoC)，BM1688(x86 PCIe、SoC)
+* 支持INT8(BM1684X)、INT4(BM1684X/BM1688)模型编译和推理
+* 支持基于BMRT的C++例程
+* 支持多轮对话
 
-以下为soc模式相关：
+## 3. 运行环境准备
+在PCIe上无需修改内存，以下为soc模式相关：
 
-### 2.1 环境部署问题
+因为编译的最小的INT4模型加载后，最少要使用3927MB的TPU内存，所以您需要保证您的SE9的内存至少要大于4GB为好，正常的SE9-16设备，在出厂的时候，其TPU内存为5632，您无需修改，如果您需要修改内存，请参考下面的教程操作：
 
-我们为您提供了较新的SE7刷机包，您可以使用下面的下载方式进行下载，然后按照官网的刷机方式进行刷机。
+对于1688系列设备（如SE9/SM9），都可以通过这种方式完成环境准备，使得满足MiniCPM-2B运行条件。首先，在1688 SoC环境上，参考如下命令修改设备内存。
 
-```shell
-pip3 install dfss
-python3 -m dfss --url=open@sophgo.com:sophon-demo/MiniCPM/sdcard.tgz
-tar -zxvf sdcard.tgz
+```bash
+cd /data/
+mkdir memedit && cd memedit
+wget -nd https://sophon-file.sophon.cn/sophon-prod-s3/drive/23/09/11/13/DeviceMemoryModificationKit.tgz
+tar xvf DeviceMemoryModificationKit.tgz
+cd DeviceMemoryModificationKit
+tar xvf memory_edit_{vx.x}.tar.xz #vx.x是版本号
+cd memory_edit
+./memory_edit.sh -p #这个命令会打印当前的内存布局信息
+./memory_edit.sh -c -npu 1536 -vpu 0 -vpp 4096 #npu也可以访问vpu和vpp的内存
+sudo cp /data/memedit/DeviceMemoryModificationKit/memory_edit/boot.itb /boot/boot.itb && sync
+sudo reboot
 ```
 
+> **注意：**
+> 1. tpu总内存为npu/vpu/vpp三者之和，int4应满足tpu内存 >= 4096MB。
+> 2. 更多教程请参考[SoC内存修改工具](https://doc.sophgo.com/sdk-docs/v23.07.01/docs_latest_release/docs/SophonSDK_doc/zh/html/appendix/2_mem_edit_tools.html)
 
-## 3. 准备模型和链接库
+## 4. 准备模型和链接库
 
 该模型目前支持在BM1688和BM1684X上运行，已提供编译好的bmodel。
 
-### 3.1 使用提供的模型
+### 4.1 使用提供的模型
 
 ​本例程在`scripts`目录下提供了相关模型以及对应链接库得下载脚本`download.sh`
+**注意：**在运行前，应该保证存储空间大于20GB。
 
 ```bash
 # 安装unzip，若已安装请跳过，非ubuntu系统视情况使用yum或其他方式安装
@@ -74,7 +89,8 @@ chmod -R +x scripts/
 │   └── token_config                        #tokenizer文件及模型
 ├── docs
 │   └── FAQ.md                              #问题汇总
-├── mdoels
+│   └── MiniCPM-2B_Export_Guide.md          #模型导出及编译指南
+├── models
 │   ├── BM1684X                                     #使用TPU-MLIR编译，用于BM1684X的模型
 │   │   ├── minicpm-2b_bm1684x_int4.bmodel
 │   └── BM1688                                      #使用TPU-MLIR编译，用于BM1684X的模型
@@ -85,161 +101,37 @@ chmod -R +x scripts/
 │   ├── Show_Results.png
 │   └── sophgo_chip.png
 ├── README.md
-└── scripts                                #下载及模型编译脚本等
-    ├── compile                            #模型编译文件
-    │   ├── compile_bm1684x.sh             #编译1684X的脚本
-    │   ├── compile_bm1688.sh              #编译1688的脚本
-    │   ├── export_onnx.py                 #导出onnx模型脚本
-    │   └── modeling_minicpm.py            #模型文件
-    └── download.sh
+├── scripts                                #下载及模型编译脚本等
+│   ├── gen_bmodel.sh                      #编译1684X/1688的脚本
+│   └── download.sh
+└── tools
+    ├── export_onnx.py                     #导出onnx模型脚本
+    └── MiniCPM-2B
+        └── modeling_minicpm.py            #模型文件
 ```
 
 **注意：** 在下载模型前，应该保证存储空间大于25GB。
 
-### 3.2 开发环境准备
+### 4.2 自行编译模型
+此部分请参考[MiniCPM-2B模型导出与编译](./docs/MiniCPM-2B_Export_Guide.md)
 
-编译模型需要在x86主机完成。
 
-**注意：** MiniCPM-2B官方库10G左右，转模型需要保证运行内存至少40G以上，导出onnx模型需要存储空间60G以上。
-
-模型编译的详细信息可以参考[MiniCPM-2B-TPU](https://github.com/XuanjieXiao/MiniCPM-2B-TPU.git)。
-以下是基本步骤：
-
-1.下载docker，启动容器
-
-```bash
-docker pull sophgo/tpuc_dev:latest
-# myname1234 is just an example, you can set your own name
-docker run --privileged --name myname1234 -v $PWD:/workspace -it sophgo/tpuc_dev:latest
-```
-
-当前$PWD应该是sophon-demo/sample/MiniCPM-2B
-
-后文(模型转换过程)假定环境都在docker的/workspace目录。
-
-2.下载MiniCPM-2B
-
-您可以使用方法一，从Huggingface下载`MiniCPM-2B`，比较大，会花较长时间。同时，我们也为您提供了便捷的下载方式，您可以使用下面方法二来下载：
-
-方法一：
-
-``` shell
-git lfs install
-git clone git@hf.co:openbmb/MiniCPM-2B-sft-bf16
-```
-
-方法二：
-
-``` shell
-pip3 install dfss
-sudo apt-get update
-sudo apt-get install unzip
-python3 -m dfss --url=open@sophgo.com:sophon-demo/MiniCPM/MiniCPM-2B-sft-bf16.zip
-unzip MiniCPM-2B-sft-bf16.zip
-```
-
-将解压后的文件放至/compile路径下
-
-并对该工程做如下修改：
-
-使用`scripts/compile`下的`modeling_minicpm.py`替换在 `MiniCPM-2B-sft-bf16` 目录下的原模型的对应文件`modeling_minicpm.py`
-
-3.下载`TPU-MLIR`代码并编译，(也可以直接下载编译好的release包解压)
-
-``` shell
-git clone git@github.com:sophgo/tpu-mlir.git
-cd tpu-mlir
-source ./envsetup.sh
-./build.sh
-```
-
-4.下载[sentencepiece](https://github.com/google/sentencepiece)，并编译得到`sentencepiece.a`
-
-我们也在对应的编译文件夹下内置了相关的 `libsentencepiece.a` (已集成在 `support\lib_XXX`目录下), 您可以直接使用而无需额外的编译操作。
-
-您也可以参考下面的编译操作来编译您处理器架构的`libsentencepiece.a`。
-
-```shell
-git clone git@github.com:google/sentencepiece.git
-cd sentencepiece
-mkdir build
-cd build
-cmake ..
-make -j
-```
-
-如果要编译SoC环境，则需要在cpp的`CMakeLists.txt`加入如下代码：
-
-```cmake
-set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
-set(CMAKE_ASM_COMPILER aarch64-linux-gnu-gcc)
-set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
-```
-
-(如果需要重新编译sentencepiece,也需要在sentencepiece的`CMakeLists.txt`进行上述修改)
-
-5.下载最新的libsophon库并安装
-
-因该例程对libsophon的版本需求比较高，故而您所使用的libsophon可能不支持，但是我们给您提供了能够支持的libsophon版本，
-您可以直接使用 `support`文件夹下的对应的libsophon，如果您还有其他的问题，您可以直接参考[FAQ](./docs/FAQ.md)。
-
-### 3.3 编译模型
-
-0.下载`TPU-MLIR`代码并编译，(也可以直接下载编译好的release包解压)
-
-``` shell
-git clone git@github.com:sophgo/tpu-mlir.git
-cd tpu-mlir
-source ./envsetup.sh
-./build.sh
-```
-
-1.导出所有onnx模型，如果过程中提示缺少某些组件，直接`pip3 install 组件`即可
-
-``` shell
-cd compile
-python3 export_onnx.py --model_path your_minicpm-2b_path
-```
-
-此时有大量onnx模型被导出到tmp目录。模型`seq_length`默认为512，如果想要支持更长序列，请在 `export_onnx.py`脚本运行时指定`--seq_length your_seq_length`
-
-2.对onnx模型进行编译，生成bmodel，这个过程会花一些时间，最终生成`minicpm-2b_XXX.bmodel`文件
-
-2.1 编译BM1684X的模型，进行INT8量化
-
-```shell
-./compile_bm1684x.sh --mode int8 --name minicpm-2b
-```
-
-2.2 目前TPU-MLIR、BM1688支持对MiniCPM进行INT4量化，如果要生成单核模型，则执行以下命令，最终生成`minicpm-2b_int4_1core.bmodel`文件
-
-```shell
-./compile_bm1688.sh --name minicpm-2b --num_core 1 
-```
-
-如果要生成双核模型，则执行以下命令，最终生成`minicpm-2b_int4_2core.bmodel`文件
-
-```shell
-./compile_bm1688.sh --name minicpm-2b --num_core 2 
-```
-
-针对BM1688，其中num_core决定了后续所需要使用的推理芯片的内核数量, mode目前支持
-"int4"(scripts/download.sh 中提供已经转好的`1 core 和 2 core`bmodel),提供的模型文件均可以在执行scripts/download.sh 中下载
-
-## 4. 编译例程
+## 5. 例程测试
 
 C++例程的详细编译请参考[C++例程](./cpp/README.md)
 
 
-## 5. 运行效果及性能
+## 6. 程序性能测试
+
+这里的测试输入为："山东省最高的山是哪座山？"
 根据测试，我们得到了如下表的模型性能表：
-|    测试平台   |     测试程序      |        测试模型        |speed|
-| -----------  | ---------------- | ---------------------- | --------  |
-|   1684X PCIE | demo.cpp  | minicpm-2b_bm1684x_int4       |    15 token/s  |
-|   SE7-32     | demo.cpp  | minicpm-2b_bm1684x_int4       |    20 token/s  |
-|   SE9-16     | demo.cpp  | minicpm-2b_bm1688_int4_1core  |    8  token/s  |
-|   SE9-16     | demo.cpp  | minicpm-2b_bm1688_int4_2core  |    9 token/s  |
+|    测试平台   |     测试程序       |           测试模型          |first token latency(s)|token per second(tokens/s)| 
+| -----------  | ---------------- | ---------------------------  | --------------------- | ----------------------- | 
+|   SE7-32     | demo.cpp  | minicpm-2b_bm1684x_int4       | 0.384 s |   19 token/s  |
+|   SE9-16     | demo.cpp  | minicpm-2b_bm1688_int4_1core  | 2.059 s |   9  token/s  |
+|   SE9-16     | demo.cpp  | minicpm-2b_bm1688_int4_2core  | 1.230 s |   10 token/s  |
 
-以下为BM1688双核INT4量化模式的运行效果：
-
-![Show_Results](./pics/Show_Results.png)
+> **测试说明**：
+> 1. 性能测试结果具有一定的波动性，建议多次测试取平均值；
+> 2. SE7-32的主控处理器为8核 ARM A53 42320 DMIPS @2.3GHz，SE9-16为8核CA53@1.6GHz，PCIe上的性能由于处理器的不同可能存在较大差异；
+> 3. 这里使用的SDK版本是V23.09LTS SP2；

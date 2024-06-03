@@ -21,7 +21,7 @@ parser.add_argument('--seq_length', type=int, default=512, help="sequence length
 args = parser.parse_args()
 
 model_path = args.model_path
-folder = f"./tmp/onnx"
+folder = f"../scripts/tmp/onnx"
 
 origin_model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, trust_remote_code=True).eval()
 

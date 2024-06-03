@@ -29,7 +29,7 @@ pip3 install -r python/requirements.txt
 
 ## 2. 编译程序
 
-PCIE环境下直接编译可以在之前使用的tpu的docker下继续执行；SOC环境下也可以直接进行编译。
+PCIE环境下和SOC环境下都可以直接进行编译。
 
 进行编译之前，请先确认之前已经执行过`MiniCPM-2B/scripts/download.sh`
 

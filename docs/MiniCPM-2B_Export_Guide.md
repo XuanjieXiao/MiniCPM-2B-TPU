@@ -130,7 +130,7 @@ python3 export_onnx.py --model_path tools/MiniCPM-2B-sft-bf16/
 gen_bmodel.sh的参数解析：
     --name minicpm-2b  #模型名字
     --mode int4        #量化模型参数
-    --target BM16888   #编译的模型芯片名
+    --target BM1688   #编译的模型芯片名
     --num_core 1       #模型所需推理内核数，其中BM1684X不需要指定，默认为1
 ```
 
@@ -150,7 +150,7 @@ gen_bmodel.sh的参数解析：
 2.3 如果要生成双核模型，则执行以下命令，最终生成`minicpm-2b_bm1688_int4_2core.bmodel`文件
 
 ```shell
-./gen_bmodel.sh --name minicpm-2b --mode int4 --target BM16888 --num_core 2 
+./gen_bmodel.sh --name minicpm-2b --mode int4 --target BM1688 --num_core 2 
 ```
 
 针对BM1688，其中num_core决定了后续所需要使用的推理芯片的内核数量, (scripts/download.sh 中提供已经转好的`1 core 和 2 core`bmodel),提供的模型文件均可以在执行scripts/download.sh 中下载

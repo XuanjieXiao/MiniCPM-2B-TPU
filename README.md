@@ -61,7 +61,8 @@ sudo reboot
 
 ### 4.1 使用提供的模型
 
-​本例程在`scripts`目录下提供了相关模型以及对应链接库得下载脚本`download.sh`
+​本例程在`scripts`目录下提供了下载脚本`download.sh`
+
 **注意：**在运行前，应该保证存储空间大于20GB。
 
 ```bash
@@ -102,15 +103,13 @@ chmod -R +x scripts/
 │   └── sophgo_chip.png
 ├── README.md
 ├── scripts                                #下载及模型编译脚本等
-│   ├── gen_bmodel.sh                      #编译1684X/1688的脚本
+│   ├── gen_bmodel.sh                      #编译bmodel的脚本
 │   └── download.sh
 └── tools
     ├── export_onnx.py                     #导出onnx模型脚本
     └── MiniCPM-2B
         └── modeling_minicpm.py            #模型文件
 ```
-
-**注意：** 在下载模型前，应该保证存储空间大于25GB。
 
 ### 4.2 自行编译模型
 此部分请参考[MiniCPM-2B模型导出与编译](./docs/MiniCPM-2B_Export_Guide.md)
@@ -134,4 +133,4 @@ C++例程的详细编译请参考[C++例程](./cpp/README.md)
 > **测试说明**：
 > 1. 性能测试结果具有一定的波动性，建议多次测试取平均值；
 > 2. SE7-32的主控处理器为8核 ARM A53 42320 DMIPS @2.3GHz，SE9-16为8核CA53@1.6GHz，PCIe上的性能由于处理器的不同可能存在较大差异；
-> 3. 这里使用的SDK版本是V23.09LTS SP2；
+> 3. 这里SE7-32使用的SDK版本是V23.09LTS SP2，SE9-16使用的SDK版本是v1.5.1；
